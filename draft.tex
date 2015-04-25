@@ -1,0 +1,109 @@
+\documentclass[letterpaper, oneside, 12pt]{report}
+\usepackage[margin = 1.0in]{geometry}
+\usepackage[nottoc,notlof,notlot]{tocbibind}
+\usepackage[colorlinks=false]{hyperref}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{setspace}
+\usepackage{wrapfig}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{cite}
+\usepackage{fontspec}
+\setmainfont{Tahoma}
+
+\geometry{letterpaper}
+
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\setlength{\skip\footins}{0.8cm}
+\setlength{\tabcolsep}{30pt}
+
+% Title page parameters
+\lhead{Andrew Lawson}
+\title{\large COOPERATIVE CONTROL OF MULTIPLE UAVS FOR 3-D MAP GENERATION}
+\author{
+  \large
+  Andrew Lawson \\
+  University of Connecticut \\
+  Computer Science and Engineering
+}
+\date{\large May 1, 2015}
+\pagestyle{fancy}
+
+\begin{document}
+\doublespacing
+
+% Title page
+\begin{titlepage}
+  \maketitle
+  \thispagestyle{empty}
+\end{titlepage}
+\clearpage
+
+% Abstract
+\begin{abstract}
+  In the modern field of robotics, the ability for a robot to smoothly move about the environment, regardless of the medium, has proven to be fairly trivial. However, the ability for a mobile robot to track its own position and make deterministic decisions about it's own location in a foreign environment remains a fundamental, but critical problem. In most typical robotic experiments, the use of external measurement systems (such as GPS or motion capture cameras) allow researchers to capture the exact position of a robot in its environment and focus on other areas of interest. In the past couple decades, successful algorithms called SLAM\footnote{Simultaneous-Localization-And-Mapping: algorithm that uses sensor data to independently determine a position relational to an environment and simultaneously create a virtual map} have allowed singular mobile robots to determine their own position in a world space and construct a 3-D map from collected positional data. However, despite these advances, the ability for multiple UAV\footnote{UAV: unmanned aerial vehicle} robots to cooperatively determine their environmental boundaries is an area that remains relatively under-developed. Some studies have attempted this decentralized, cooperative approach, but fall short either by depending on external systems or lacking true 3-D capability. By taking this distributional approach with multiple robotic agents, the computational overhead of map generation is greatly reduced. Teams of coordinated robots could efficiently explore unaccessible areas, complete team-based tasks (like lifting large objects), conduct dangerous search and rescue missions, and ultimately increase the feasibility of robotics in numerous situations.
+\end{abstract}
+\clearpage
+
+\renewcommand{\abstractname}{Acknowledgements}
+\begin{abstract}
+ Thanks Mum!
+\end{abstract}
+\clearpage
+
+% Table of Contents, Figures, and Tables
+\tableofcontents
+\listoffigures
+\listoftables
+\clearpage
+
+\chapter{Introduction}
+
+\section{Literature Review}
+
+In recent research projects with quadcopters, a wide variety of methods have been used to localize a robot in their environment, including (but not limited to) the use of high-resolution laser scanners \cite{bachrach2011range,shen2011autonomous}, monocular cameras \cite{soundararaj2009autonomous}, and ``RGB-D"\footnote{RGB-D: red-blue-green-depth} cameras as a combination of the two \cite{huang2011visual}. A laser has been used to generate a point cloud and pull out contours that trace the environment\cite{bachrach2011range}, a monocular camera to exploit texture gradients and continuations that can translated into depth estimates \cite{soundararaj2009autonomous}, and Microsoft Kinects (RGB-D cameras) to associate laser depth with image data \cite{huang2011visual}. Lasers capable of such precision and frequency are economically infeasible, and additionally, a pure visual approach is slow, can result in large margins of error, and lacks precision. Using a combination of the two, by means of an RGB-D camera, is responsive,  inexpensive, and produces results of reasonable reliability.
+
+
+With previous RGB-D camera approaches, there have been five primary components: feature extraction, rotation estimation, feature matching, inlier detection, and motion estimation \cite{huang2011visual}. This involves taking certain features (like color, edges, corners, etc.) out of an image frame, estimating the rotation pose of the robot, matching new features to existing ones, filtering out bad data, and then estimating the motion of the robot. Using a data filter called an Extended-Kalman-Filter, the visual odometry data will be combined with velocity estimates to form a state estimation of the robot \cite{huang2011visual}. By implementing this filter, this will allow real-time positional estimates of the vehicle.
+
+
+Researchers have also attempted de-centralized SLAM methods like I have proposed, but do not provide total three-dimensional capability. Some have used a VICON camera system \cite{leung2012decentralized} to provide true location data to robotic agents. Others have implemented truly autonomous, cooperative SLAM, but only focused on 2-D, planar data analysis \cite{cunningham2012large}. As I have mentioned previously, this does not fully address the ability to move and coordinate multiples robot entities independently in a realistic world setting. By examining this precedent work in the field, however, the ability to create cooperative 3-D SLAM can be fully visualized.
+
+\chapter{Hardware Design}
+
+The direction of my project has two major stages to complete: Designing the robot and developing the navigation and map-building algorithms. \\
+
+%\begin{figure}[h!]
+ %\caption{Prototype quadcopter.}
+ %\centering
+   %\includegraphics[width=0.6\textwidth]{copter}
+%\end{figure}
+
+\begin{table}[h!]
+\centering
+\caption{List of Components}
+\vspace{2mm}
+\begin{tabular}{l l}
+\hline \hline
+\vspace{-2mm}
+Component & \multicolumn{1}{l}{Description} \\ [1ex]
+\hline
+& \\
+Pandaboard ES & High-level Computer \\
+DJI Naza & Low-level computer \\
+Arduino Uno & I/O controller \\
+Microsoft Kinect & Visual sensor \\
+MaxSonar EZ0	& Sonar sensor \\
+Xbee & Wireless communication
+\end{tabular}
+\end{table}
+
+\clearpage
+
+\bibliography{uscholar}
+\bibliographystyle{ieeetr}
+
+\end{document}
