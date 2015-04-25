@@ -10,10 +10,10 @@
 \usepackage{enumitem}
 \usepackage{fancyhdr}
 \usepackage{cite}
-\usepackage{fontspec}
-\setmainfont{Tahoma}
+\usepackage{newcent}
 
 \geometry{letterpaper}
+\renewcommand{\familydefault}{\sfdefault}
 
 \DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
 
@@ -22,7 +22,7 @@
 
 % Title page parameters
 \lhead{Andrew Lawson}
-\title{\large COOPERATIVE CONTROL OF MULTIPLE UAVS FOR 3-D MAP GENERATION}
+\title{\large COOPERATIVE 3-D MAP GENERATION USING MULTIPLE UAVS}
 \author{
   \large
   Andrew Lawson \\
@@ -50,7 +50,7 @@
 
 \renewcommand{\abstractname}{Acknowledgements}
 \begin{abstract}
- Thanks Mum!
+ I'd like to thank Prof. Shalabh Gupta, Prof. Ashwin Dani, and Prof. Robert McCartney for their advice and support. I'd also like to thank Kris Balisciano, Chung Yang, and everyone in L.I.N.K.S. Lab for all their work on the project.
 \end{abstract}
 \clearpage
 
@@ -92,12 +92,10 @@ The direction of my project has two major stages to complete: Designing the robo
 Component & \multicolumn{1}{l}{Description} \\ [1ex]
 \hline
 & \\
-Pandaboard ES & High-level Computer \\
-DJI Naza & Low-level computer \\
-Arduino Uno & I/O controller \\
-Microsoft Kinect & Visual sensor \\
-MaxSonar EZ0	& Sonar sensor \\
-Xbee & Wireless communication
+ODROID XU3 & ARM SBU \\
+Pixhawk PX4 & Controller \\
+Microsoft Kinect & Visual Sensor \\
+MaxSonar EZ0	& Sonar Sensor \\
 \end{tabular}
 \end{table}
 
