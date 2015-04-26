@@ -1,7 +1,7 @@
-\documentclass[letterpaper, oneside, 12pt]{report}
+\documentclass[letterpaper, oneside, 10pt]{report}
 \usepackage[margin = 1.0in]{geometry}
 \usepackage[nottoc,notlof,notlot]{tocbibind}
-\usepackage[colorlinks=false]{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{graphicx}
 \usepackage{amssymb}
 \usepackage{epstopdf}
@@ -10,10 +10,9 @@
 \usepackage{enumitem}
 \usepackage{fancyhdr}
 \usepackage{cite}
-\usepackage{newcent}
+\usepackage{classicthesis}
 
 \geometry{letterpaper}
-\renewcommand{\familydefault}{\sfdefault}
 
 \DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
 
@@ -33,7 +32,7 @@
 \pagestyle{fancy}
 
 \begin{document}
-\doublespacing
+% \doublespacing
 
 % Title page
 \begin{titlepage}
@@ -62,6 +61,7 @@
 
 \chapter{Introduction}
 
+\section{Overview}
 \section{Literature Review}
 
 In recent research projects with quadcopters, a wide variety of methods have been used to localize a robot in their environment, including (but not limited to) the use of high-resolution laser scanners \cite{bachrach2011range,shen2011autonomous}, monocular cameras \cite{soundararaj2009autonomous}, and ``RGB-D"\footnote{RGB-D: red-blue-green-depth} cameras as a combination of the two \cite{huang2011visual}. A laser has been used to generate a point cloud and pull out contours that trace the environment\cite{bachrach2011range}, a monocular camera to exploit texture gradients and continuations that can translated into depth estimates \cite{soundararaj2009autonomous}, and Microsoft Kinects (RGB-D cameras) to associate laser depth with image data \cite{huang2011visual}. Lasers capable of such precision and frequency are economically infeasible, and additionally, a pure visual approach is slow, can result in large margins of error, and lacks precision. Using a combination of the two, by means of an RGB-D camera, is responsive,  inexpensive, and produces results of reasonable reliability.
@@ -72,7 +72,54 @@ With previous RGB-D camera approaches, there have been five primary components: 
 
 Researchers have also attempted de-centralized SLAM methods like I have proposed, but do not provide total three-dimensional capability. Some have used a VICON camera system \cite{leung2012decentralized} to provide true location data to robotic agents. Others have implemented truly autonomous, cooperative SLAM, but only focused on 2-D, planar data analysis \cite{cunningham2012large}. As I have mentioned previously, this does not fully address the ability to move and coordinate multiples robot entities independently in a realistic world setting. By examining this precedent work in the field, however, the ability to create cooperative 3-D SLAM can be fully visualized.
 
-\chapter{Hardware Design}
+\chapter{Robot Design}
+
+\section{Design Decisions}
+
+Several key design decisions arose when choosing a direction for robot design and selection of components. The most signifcant choice for the robot was choosing an architecture for the onboard computational unit - specifically an ARM or x86 computer. The second key design dilemma involved the selection of a laser-scanning sensor or an RGB-D camera. As shown below, both these choices had great effect upon the path of experimentation and results obtained.
+
+\subsection{ARM vs. x86}
+
+The main advantage of choosing an x86 board (found in most desktop or laptop computers) is compatibility. Almost all software packages are available in prebuilt, binary form on package managers (such as Ubuntu's apt-get) and setting up the computing environment can be done with a few simple installation commands. This convenience, unfortunately, comes at a financial and dimensional price - most small form-factor x86 boards are extremely expensive and cheaper options are considerably larger in size. These tradeoffs make selection of such a board unfeasible for an aerial drone where space is extremely limited and minimization of cost is a primary concern. As a result, ARM boards (like those in smartphones) are much more attractive - they offer extremely small form-factors, yet remain very affordable. The issue that arises, of course, is that of compatibility - many programs or libraries are not (immediately) available on an ARM installation and require manual compilation of source code using an ARM-based compiler and possible changes to the source code itself first.
+
+\subsection{Laser vs. RGB-D Camera}
+
+\section{Hardware}
+
+The hardware design of the robot was focused on using low-cost, off-the-shelf components (see Table 1). The approximate cost of a built robot was \$894, significantly cheaper than those used at MIT or University of Washington with similar project requirements.
+
+% Table of components used on robot
+\begin{table}[h!]
+  \centering
+  \caption{Table of Components}
+  \vspace{2mm}
+  \begin{tabular}{l l l}
+    \hline \hline
+    \vspace{-2mm}
+    Component & \multicolumn{1}{l}{Description} & \multicolumn{1}{l}{Cost} \\ [1ex]
+    \hline
+    & \\
+    DJI F450 Frame & Chassis & \$200 \\
+    DJI 1045 Propellers & Props & \$10 \\
+    DJI 2212 Motors & Actuators & \$30 \\
+    12V and 5V Regulators & Power Reg. & \$40 \\
+    Zippy 2450 mAh LiPo & Battery & \$30 \\
+    64GB ODROID XU3 & ARM SBU & \$240 \\
+    Pixhawk PX4 & Controller & \$220 \\
+    Microsoft Kinect & Visual Sensor & \$99 \\
+    MaxSonar EZ0	& Sonar Sensor & \$25 \\
+  \end{tabular}
+\end{table}
+
+\noindent The robot used a stock F450 frame from DJI, which was not modified in any way - all components were mounted on existing areas using screws or adhesive products.
+
+\begin{figure}[h!]
+ \caption{Photograph of finished quadcopter robot.}
+ \centering
+   \includegraphics[width=0.3\textwidth]{figures/quadcopter}
+\end{figure}
+
+\section{Software}
 
 The direction of my project has two major stages to complete: Designing the robot and developing the navigation and map-building algorithms. \\
 
@@ -82,22 +129,18 @@ The direction of my project has two major stages to complete: Designing the robo
    %\includegraphics[width=0.6\textwidth]{copter}
 %\end{figure}
 
-\begin{table}[h!]
-\centering
-\caption{List of Components}
-\vspace{2mm}
-\begin{tabular}{l l}
-\hline \hline
-\vspace{-2mm}
-Component & \multicolumn{1}{l}{Description} \\ [1ex]
-\hline
-& \\
-ODROID XU3 & ARM SBU \\
-Pixhawk PX4 & Controller \\
-Microsoft Kinect & Visual Sensor \\
-MaxSonar EZ0	& Sonar Sensor \\
-\end{tabular}
-\end{table}
+\chapter{Single Robot}
+\section{Navigation}
+\section{Mapping}
+\section{Results}
+
+\chapter{Multiple Robots}
+\section{Map Fusion}
+\section{Results}
+
+\chapter{Conclusions}
+
+\chapter{Appendix}
 
 \clearpage
 
