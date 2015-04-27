@@ -11,6 +11,8 @@
 \usepackage{fancyhdr}
 \usepackage{cite}
 \usepackage{classicthesis}
+\usepackage{caption}
+\usepackage{subcaption}
 
 \geometry{letterpaper}
 
@@ -32,7 +34,7 @@
 \pagestyle{fancy}
 
 \begin{document}
-% \doublespacing
+\doublespacing
 
 % Title page
 \begin{titlepage}
@@ -86,7 +88,9 @@ The main advantage of choosing an x86 board (found in most desktop or laptop com
 
 \section{Hardware}
 
-The hardware design of the robot was focused on using low-cost, off-the-shelf components (see Table 1). The approximate cost of a built robot was \$894, significantly cheaper than those used at MIT or University of Washington with similar project requirements.
+\subsection{Components}
+
+The hardware design of the robot was focused on using low-cost, off-the-shelf components (see Table 1). The approximate cost of a built robot was \$894, significantly cheaper than pre-built alternatives such as the AscTec Pelican used at MIT \cite{bachrach2011range} and University of Washington \cite{bachrach2012estimation} with similar project requirements.
 
 % Table of components used on robot
 \begin{table}[h!]
@@ -119,7 +123,31 @@ The hardware design of the robot was focused on using low-cost, off-the-shelf co
    \includegraphics[width=0.3\textwidth]{figures/quadcopter}
 \end{figure}
 
+\noindent The onboard computational unit chosen was the ODROID XU3 by HardKernel, which has a 1.7Ghz quad-core Snapdragon CPU, 2GB DDR3 RAM, 64GB eMMC flash storage, USB 3.0, and draws 5A. Initially, the robot was equipped with a PandaBoard ES, possessing a 1.2Ghz dual core with 1GB DDR3 RAM, SD card storage, and drawing 3A. Due to low memory and high read/write latencies, the latter board struggled to bear the load of even a full Ubuntu installation and was replaced with the XU3. For the visual sensor, a stripped down Microsoft Kinect Model 1473 was mounted onto the quadcopter - removing the sensor housing reduced weight from a heavy 3 lb to a very nimble 100 g. A Pixhawk PX4 flight controller was also added to the system for actuation control - this allowed the focus of the project to remain on the mapping and flight components of the robot. To accomodate the 12V, 1A requirements of the Kinect and 5V, 5A of the ODROID, several power regulators were mounted and installed to the robot's power system. The entire system was powered by a single 2450 mAh LiPo battery.
+
 \section{Software}
+
+\subsection{ROS Hydro}
+
+% ROS architecture
+\begin{figure}[h!]
+ \caption{Photograph of finished quadcopter robot.}
+ \centering
+   \includegraphics[width=0.4\textwidth]{images/ros_arch}
+\end{figure}
+
+\subsection{RGBDSLAM\_V2}
+
+Due to time constraints, a proprietary SLAM algorithm was forgone for a previously developed software package. Due to it's compatibility with ROS and extensive use throughout the robotics community, RGBDSLAM was the software used to produce the map and pose transformations of the robot during flight.
+
+% RGBDSLAM data flow
+\begin{figure}[h]
+ \caption{Data flow of RGBDSLAM_V2}
+ \centering
+   \includegraphics[width=0.6\textwidth]{images/rgbdslam}
+\end{figure}
+
+\subsection{MAVROS}
 
 The direction of my project has two major stages to complete: Designing the robot and developing the navigation and map-building algorithms. \\
 
@@ -131,21 +159,90 @@ The direction of my project has two major stages to complete: Designing the robo
 
 \chapter{Single Robot}
 \section{Navigation}
+
+
+
 \section{Mapping}
+
+In a previous paper, Bachrach et al. implemented mapping by offloading realtime processing to a local server \cite{bachrach2012estimation}. This robot design differs from its contemporaries by computing all steps of the mapping procedure onboard. As noted in Figure X, the quadcopter's onboard computer runs an RGBDSLAM ROS node in realtime during flight. This node generates the three-dimensional map, which can be be saved on disk as a file through a service call in ROS and retrieved after a test flight. The ROS node also allows requests for the current state of the map. As a result, a custom ROS node was written that allows for realtime visualization - this can be streamed to a nearby computer via Wi-Fi connection (see Figure X, Y). These two options allow for absolute flexibility in situations where remote access to the robot may or may not be possible.
+
 \section{Results}
+
+\noindent Testing of a single quadcopter robot was done in the concourse of the Information Technology Engineering building on the UConn Storrs campus. As seen in Figure 5, an image taken of the quadcopter in flight can be seen in the top left, the RGB stream from the Kinect sensor on the bottom left, and on the right-hand side, the 3-D map generated in realtime by the onboard computer.
+
+% Map fusion algorithm flowchart
+\begin{figure}[h]
+ \caption{Live test of a single quadcopter.}
+ \centering
+   \includegraphics[width=0.8\textwidth]{images/single_test}
+\end{figure}
 
 \chapter{Multiple Robots}
 \section{Map Fusion}
 
-%\begin{figure}[h]
- %\caption{Data flow of map fusion algorithm.}
- %\centering
-   %\includegraphics[width=0.6\textwidth]{copter}
-%\end{figure}
+\noindent When transitioning from one robotic agent generating a global 3-D map to multiple robot agents, an algorithm capable of fusing each robot's local map together is essential. Each map generated by an individual robot has its own point cloud and pose (or transformation) in 3-D space. In order to make sense of these individual clouds, the algorithm accomplishes two goals: 1) it transforms two maps into the same global reference frame, 2) stitches the maps together and 3) eliminates redundant data points. By incrementally inputting maps into the algorithm, the server can output a final 3-D representative of all robotic agents' mapping efforts. As shown in Figure 2, this algorithm is divided into two key sections and follows a similar approach to Henry et. al.\cite{henry2012rgb}.
+
+% Map fusion algorithm flowchart
+\begin{figure}[h]
+ \caption{Data flow of map fusion algorithm.}
+ \centering
+   \includegraphics[width=0.9\textwidth]{images/mapfusion}
+\end{figure}
+
+\subsection{Sample Consensus Initial Alignment}
+
+\noindent Given two maps within their own reference frame, it's necessary to transform the source map into the reference frame of the target map. The point clouds are first put through an initial alignment phase using the Sample Concensus Initial Alignment algorithm \cite{rusu2009fast}. This outputs a final transformation which is applied to the source cloud. In laymen's terms, this basically provides a large correction to the initial alignment of the two clouds, seen in Figure 4(a).
+
+\begin{figure}[h]
+ \caption{Data flow of SCIA process.}
+ \centering
+   \includegraphics[width=0.45\textwidth]{images/initialalignment}
+\end{figure}
+
+\noindent Within the alignment process itself, there are several subprocesses. First, the normals of each cloud are estimated, which are then used to estimate Fast Point Feature Histogram \cite{rusu2009fast, rusu2009fastlabel} features from each point cloud. The features clouds from this process are finally used to estimate an initial transformation.
+
+\subsection{Iterative Closest Point}
+
+\noindent After the clouds have passed through the initial alignment stage, they are locally optimized using the Iterative Closest Point algorithm. As shown in Figure 4(b), this outputs a second transformation applied to the source cloud that eliminates narrower errors on the transformation compared to the target cloud.
+
+\subsection{Filtering and Concatentation}
+
+Lastly, the target and transformed source cloud are concatenated using Point Cloud Library's concatentation features - programmatically, this is as simple as just adding the clouds together. Using another Voxel filter, the excess data points are trimmed away to generate the final stitched version of the map, as shown in Figure 4(c). \\
+
+% Map fusion visuals
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[h]{0.31\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/fusion_raw}
+        \caption{Raw concatentation.}
+        \label{fig:Raw concatentation.}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[h]{0.31\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/fusion_scia}
+        \caption{SCIA alignment.}
+        \label{fig:SCIA alignment.}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[h]{0.31\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/fusion_scia}
+        \caption{ICP alignment.}
+        \label{fig:ICP alignment.}
+    \end{subfigure}
+    \caption{Visual process of map fusion.}
+    \label{fig:Visual process of map fusion.}
+\end{figure}
 
 \section{Results}
 
 \chapter{Conclusions}
+
+\subsection{Future Work}
+
+
 
 \chapter{Appendix}
 
