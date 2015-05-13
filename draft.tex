@@ -138,8 +138,7 @@ The hardware design of the robot was focused on using low-cost, off-the-shelf co
 \end{figure}
 
 \subsection{RGBDSLAM\_V2}
-
-Due to time constraints, a proprietary SLAM algorithm was forgone for a previously developed software package. Due to it's compatibility with ROS and extensive use throughout the robotics community, RGBDSLAM was the software used to produce the map and pose transformations of the robot during flight.
+\noindent In order to compute a 3D map, the quadcopter's onboard computer uses an algorithm called SLAM (simultaneous localization and mapping) which computes a map and keeps track of the robotic agent's pose and translation relative to said map. Due to time constraints, it was decided that a proprietary SLAM algorithm was not an option and a previously developed software package was chosen instead. Due to it's compatibility with ROS and extensive accpetance throughout the robotics community, RGBDSLAM_V2 was the software used to produce the map and pose transformations of the robot during flight.
 
 % RGBDSLAM data flow
 \begin{figure}[h]
@@ -161,10 +160,10 @@ The direction of my project has two major stages to complete: Designing the robo
 \chapter{Single Robot}
 
 \section{Autonomy}
-As the focus of this project is on the mapping component, fully developed autonomous navigation is not present. However, some elements for inputless flight are implemented and provide a baseline for future work.
+As the focus of this project is on the mapping component, fully-developed autonomous navigation is not present. However, some elements for inputless flight are implemented and provide a baseline for future work.
 
     \subsection{Pixhawk PID}
-    The Pixhawk PX4 controller provides a built-in PID controller, which is used for drift stability and basic feedback control of the quadcopter.
+    The Pixhawk PX4 controller provides a built-in PID controller, which is used for drift stability and basic feedback control of the quadcopter. The proportional, integral, and derivative parameters were tuned through trial and error - adjusting each component until the quadcopter no longer oscillated and remained stable.
 
     \subsection{Altitude Control}
 
@@ -188,7 +187,9 @@ In a previous paper, Bachrach et al. implemented RGB-D mapping, and in a separat
 
 \chapter{Multiple Robots}
 
-\subsection{Online Mapping}
+\section{Overview}
+
+\section{Online Mapping}
 \noindent As discussed in the overview, each quadcopter needs to send its map over the network to be fused together. There are two primary methods to solve this, both with unique drawbacks. One such method is to deliver the entire aggregated point cloud map at given intervals to the server - this is immediately unfeasible because as time grows, the size of the map will grow to hundreds of megabytes and current network speeds are unable to process such a load in a reasonable time frame. The other solution is to send each individual point cloud corresponding to a timestep over the network, resulting in a reconstruction of the map on the server. This is inefficient, because the map has already been built onboard and it is redundant to perform the same operation remotely. The experiments in this report used the latter method despite its obvious weaknesses - it was the best choice given the constraints and time restrictions of the project.
 
 Coupled with the mapping component of the RGBDSLAM_V2 package, a custom ROS node was written (integrated with RGBDSLAM_V2) that provided a stream of clouds added to the map, each corresponding to a new node added within the graph. As shown in figure X, these clouds are sent over the network and simultaneously received by a server or other external computer. For each cloud, the external computer also looks up the corresponding transformation between the fixed reference frame for the map and the current camera pose by listening to the transformation broadcaster within the RGBDSLAM_V2 algorithm. Once this transformation is received, it is applied to the new cloud, which is then concatentated to the current map.
