@@ -34,7 +34,6 @@
 \pagestyle{fancy}
 
 \begin{document}
-\doublespacing
 
 % Title page
 \begin{titlepage}
@@ -60,6 +59,8 @@
 \listoffigures
 \listoftables
 \clearpage
+
+\doublespacing
 
 \chapter{Introduction}
 
@@ -120,7 +121,7 @@ The hardware design of the robot was focused on using low-cost, off-the-shelf co
 \begin{figure}[h!]
  \caption{Photograph of finished quadcopter robot.}
  \centering
-   \includegraphics[width=0.3\textwidth]{figures/quadcopter}
+   \includegraphics[width=0.3\textwidth]{images/quadcopter}
 \end{figure}
 
 \noindent The onboard computational unit chosen was the ODROID XU3 by HardKernel, which has a 1.7Ghz quad-core Snapdragon CPU, 2GB DDR3 RAM, 64GB eMMC flash storage, USB 3.0, and draws 5A. Initially, the robot was equipped with a PandaBoard ES, possessing a 1.2Ghz dual core with 1GB DDR3 RAM, SD card storage, and drawing 3A. Due to low memory and high read/write latencies, the latter board struggled to bear the load of even a full Ubuntu installation and was replaced with the XU3. For the visual sensor, a stripped down Microsoft Kinect Model 1473 was mounted onto the quadcopter - removing the sensor housing reduced weight from a heavy 3 lb to a very nimble 100 g. A Pixhawk PX4 flight controller was also added to the system for actuation control - this allowed the focus of the project to remain on the mapping and flight components of the robot. To accomodate the 12V, 1A requirements of the Kinect and 5V, 5A of the ODROID, several power regulators were mounted and installed to the robot's power system. The entire system was powered by a single 2450 mAh LiPo battery.
@@ -158,16 +159,22 @@ The direction of my project has two major stages to complete: Designing the robo
 %\end{figure}
 
 \chapter{Single Robot}
-\section{Navigation}
 
+\section{Autonomy}
+As the focus of this project is on the mapping component, fully developed autonomous navigation is not present. However, some elements for inputless flight are implemented and provide a baseline for future work.
 
+    \subsection{Pixhawk PID}
+    The Pixhawk PX4 controller provides a built-in PID controller, which is used for drift stability and basic feedback control of the quadcopter.
+
+    \subsection{Altitude Control}
+
+    The Pixhawk PX4 also provides an altitude holding system, given an input sensor.
 
 \section{Mapping}
 
-In a previous paper, Bachrach et al. implemented mapping by offloading realtime processing to a local server \cite{bachrach2012estimation}. This robot design differs from its contemporaries by computing all steps of the mapping procedure onboard. As noted in Figure X, the quadcopter's onboard computer runs an RGBDSLAM ROS node in realtime during flight. This node generates the three-dimensional map, which can be be saved on disk as a file through a service call in ROS and retrieved after a test flight. The ROS node also allows requests for the current state of the map. As a result, a custom ROS node was written that allows for realtime visualization - this can be streamed to a nearby computer via Wi-Fi connection (see Figure X, Y). These two options allow for absolute flexibility in situations where remote access to the robot may or may not be possible.
+In a previous paper, Bachrach et al. implemented RGB-D mapping, and in a separate publication \cite{bachrach2011range}, laser mapping, by offloading realtime processing to a local server \cite{bachrach2012estimation}.  This robot design differs from its contemporaries by computing all steps of the mapping procedure onboard. As noted in Figure X, the quadcopter's onboard computer runs an RGBDSLAM ROS node in realtime during flight. This node generates the three-dimensional map, which can be be saved on disk as a file through a service call in ROS and retrieved after a test flight. The ROS node also allows requests for the current state of the map. As a result, a custom ROS node was written that allows for realtime visualization - this can be streamed to a nearby computer via Wi-Fi connection (see Figure X, Y). These two options allow for absolute flexibility in situations where remote access to the robot may or may not be possible.
 
 \section{Results}
-
 \noindent Testing of a single quadcopter robot was done in the concourse of the Information Technology Engineering building on the UConn Storrs campus. As seen in Figure 5, an image taken of the quadcopter in flight can be seen in the top left, the RGB stream from the Kinect sensor on the bottom left, and on the right-hand side, the 3-D map generated in realtime by the onboard computer.
 
 % Map fusion algorithm flowchart
@@ -177,9 +184,23 @@ In a previous paper, Bachrach et al. implemented mapping by offloading realtime 
    \includegraphics[width=0.8\textwidth]{images/single_test}
 \end{figure}
 
-\chapter{Multiple Robots}
-\section{Map Fusion}
+\noindent Several repeated tests showed responsive mapping at about 7 frames per second. These maps were streamed in real time to a base station through a local wireless network.
 
+\chapter{Multiple Robots}
+
+\subsection{Online Mapping}
+\noindent As discussed in the overview, each quadcopter needs to send its map over the network to be fused together. There are two primary methods to solve this, both with unique drawbacks. One such method is to deliver the entire aggregated point cloud map at given intervals to the server - this is immediately unfeasible because as time grows, the size of the map will grow to hundreds of megabytes and current network speeds are unable to process such a load in a reasonable time frame. The other solution is to send each individual point cloud corresponding to a timestep over the network, resulting in a reconstruction of the map on the server. This is inefficient, because the map has already been built onboard and it is redundant to perform the same operation remotely. The experiments in this report used the latter method despite its obvious weaknesses - it was the best choice given the constraints and time restrictions of the project.
+
+Coupled with the mapping component of the RGBDSLAM_V2 package, a custom ROS node was written (integrated with RGBDSLAM_V2) that provided a stream of clouds added to the map, each corresponding to a new node added within the graph. As shown in figure X, these clouds are sent over the network and simultaneously received by a server or other external computer. For each cloud, the external computer also looks up the corresponding transformation between the fixed reference frame for the map and the current camera pose by listening to the transformation broadcaster within the RGBDSLAM_V2 algorithm. Once this transformation is received, it is applied to the new cloud, which is then concatentated to the current map.
+
+% Networked map building algorithm flowchart
+\begin{figure}[h]
+ \caption{Live test of a single quadcopter.}
+ \centering
+   \includegraphics[width=0.8\textwidth]{images/single_test}
+\end{figure}
+
+\section{Map Fusion}
 \noindent When transitioning from one robotic agent generating a global 3-D map to multiple robot agents, an algorithm capable of fusing each robot's local map together is essential. Each map generated by an individual robot has its own point cloud and pose (or transformation) in 3-D space. In order to make sense of these individual clouds, the algorithm accomplishes two goals: 1) it transforms two maps into the same global reference frame, 2) stitches the maps together and 3) eliminates redundant data points. By incrementally inputting maps into the algorithm, the server can output a final 3-D representative of all robotic agents' mapping efforts. As shown in Figure 2, this algorithm is divided into two key sections and follows a similar approach to Henry et. al.\cite{henry2012rgb}.
 
 % Map fusion algorithm flowchart
@@ -189,25 +210,25 @@ In a previous paper, Bachrach et al. implemented mapping by offloading realtime 
    \includegraphics[width=0.9\textwidth]{images/mapfusion}
 \end{figure}
 
-\subsection{Sample Consensus Initial Alignment}
+    \subsection{Sample Consensus Initial Alignment}
 
-\noindent Given two maps within their own reference frame, it's necessary to transform the source map into the reference frame of the target map. The point clouds are first put through an initial alignment phase using the Sample Concensus Initial Alignment algorithm \cite{rusu2009fast}. This outputs a final transformation which is applied to the source cloud. In laymen's terms, this basically provides a large correction to the initial alignment of the two clouds, seen in Figure 4(a).
+    \noindent Given two maps within their own reference frame, it's necessary to transform the source map into the reference frame of the target map. The point clouds are first put through an initial alignment phase using the Sample Concensus Initial Alignment algorithm \cite{rusu2009fast}. This outputs a final transformation which is applied to the source cloud. In laymen's terms, this basically provides a large correction to the initial alignment of the two clouds, seen in Figure ~\ref{fig:Raw concatentation.}.
 
-\begin{figure}[h]
- \caption{Data flow of SCIA process.}
- \centering
-   \includegraphics[width=0.45\textwidth]{images/initialalignment}
-\end{figure}
+    \begin{figure}[h]
+     \caption{Data flow of SCIA process.}
+     \centering
+       \includegraphics[width=0.45\textwidth]{images/initialalignment}
+    \end{figure}
 
-\noindent Within the alignment process itself, there are several subprocesses. First, the normals of each cloud are estimated, which are then used to estimate Fast Point Feature Histogram \cite{rusu2009fast, rusu2009fastlabel} features from each point cloud. The features clouds from this process are finally used to estimate an initial transformation.
+    \noindent Within the alignment process itself, there are several subprocesses. First, the normals $N_{source}$ and $N_{target}$ are found by PCL's normal estimator. These normal clouds are then used in PCL's Fast Point Feature Histogram (FPFH) \cite{rusu2009fast,rusu2009fastlabel} estimator, to generate approximate feature clouds $F_{source}$ and $F_{target}$. Lastly, these feature clouds from this process are used to estimate an initial transformation $T$, which is applied to the initial source cloud to obtain an initial alignment. This gives the clouds a reasonably close placement relative to each other, and allowing optimal usage of ICP in order to fine tune them.
 
-\subsection{Iterative Closest Point}
+    \subsection{Iterative Closest Point}
 
-\noindent After the clouds have passed through the initial alignment stage, they are locally optimized using the Iterative Closest Point algorithm. As shown in Figure 4(b), this outputs a second transformation applied to the source cloud that eliminates narrower errors on the transformation compared to the target cloud.
+    \noindent After the clouds have passed through the initial alignment stage, they are locally optimized using the Iterative Closest Point algorithm. ICP takes a point cloud $P_{source}$ and finds the nearest neighbor points in $P_{target}$. By minimizing the sum of squares error, a rigid transformation $T$ between $P_{source}$ and $P_{target}$ is output. As shown in Figure ~\ref{fig:SCIA alignment.}, this transformation is applied to $P_{source}$ which eliminates narrower errors between the two clouds.
 
-\subsection{Filtering and Concatentation}
+    \subsection{Filtering and Concatentation}
 
-Lastly, the target and transformed source cloud are concatenated using Point Cloud Library's concatentation features - programmatically, this is as simple as just adding the clouds together. Using another Voxel filter, the excess data points are trimmed away to generate the final stitched version of the map, as shown in Figure 4(c). \\
+    Lastly, the target and transformed source cloud are concatenated using Point Cloud Library's concatentation features - programmatically, this is as simple as just adding the clouds together. Using another Voxel filter, the excess data points are trimmed away to generate the final stitched version of the map, as shown in Figure ~\ref{fig:ICP alignment.}. \\
 
 % Map fusion visuals
 \begin{figure}[h]
@@ -238,13 +259,54 @@ Lastly, the target and transformed source cloud are concatenated using Point Clo
 
 \section{Results}
 
+Due to financial and logistical difficulties, a test involving two quadcopters flying simultaneously in real time was unable to be conducted within the time frame for this project. As an alternative to demonstrate effectiveness of this approach, two separate flights using the same quadcopter were conducted in the same environment and saved into ROS bags. These ROS bags were then simulated as live nodes, with map data streaming at the same frequency and conditions as a real multi-robot flight test - this provided data to the map fusion server that exactly duplicates two quadcopters flying simultaneously and was an acceptable substitution for a real test.
+
 \chapter{Conclusions}
 
 \subsection{Future Work}
 
-
+As stated earlier, this project did not focus on navigation or control of multiple quadcopters and took an interest purely within the feasibility of mapping using multiple quadcopters. A natural progression forward would be to implement localization and possible object avoidance. The RGBDSLAM algorithm was used exclusively for its mapping and pose graph features, but is also capable of estimating trajectory and facilitating autonomous navigation.
 
 \chapter{Appendix}
+
+% Table of PID parameters
+\begin{table}[h!]
+  \centering
+  \caption{PID Parameters}
+  \vspace{2mm}
+  \begin{tabular}{l l}
+    \hline \hline
+    \vspace{-2mm}
+    Parameter & \multicolumn{1}{l}{Value} \\ [1ex]
+    \hline
+    & \\
+    Proportional & 0.05 \\
+    Integral & 0.1 \\
+    Derivative & 50 \\
+  \end{tabular}
+\end{table}
+
+% Table of Map Fusion parameters
+\begin{table}[h!]
+  \centering
+  \caption{Map Fusion Parameters}
+  \vspace{2mm}
+  \begin{tabular}{l l}
+    \hline \hline
+    \vspace{-2mm}
+    Parameter & \multicolumn{1}{l}{Value} \\ [1ex]
+    \hline
+    & \\
+    Voxel Leaf Size & 0.05 \\
+    ICP Max. Corresp. Dist. & 0.1 \\
+    ICP Max. Iter. & 50 \\
+    ICP Trans. Epsilon & 1e-8 \\
+    ICP Euclid. Epsilon & 1 \\
+    SCIA Min. Sample. Dist & 1 \\
+    SCIA Max. Corresp. Dist & 1 \\
+    SCIA Max. Iter. & 50 \\
+  \end{tabular}
+\end{table}
 
 \clearpage
 
