@@ -87,6 +87,8 @@ The main advantage of choosing an x86 board (found in most desktop or laptop com
 
 \subsection{Laser vs. RGB-D Camera}
 
+The two major choices of sensors for robotic vision are using a laser scanner or an RGB-D camera. Much like the x86 computers, lasers are a terrific choice when cost is not a concern - they have wide field of view (some providing between 270 and 360 degrees), can scan very quickly (40 scans per second), and have amidable range (around 30 meters). However, a single unit can cost upwards of five thousand dollars. An RGB-D camera, like the Microsoft Kinect, are very cheap sensor in comparison (the Kinect only costing only \$99 per unit). Unlike the laser, these sensors provide both depth and camera image data. However, they are slower (maximum of 30 scans per second) and require sigificantly more bandwidth for data transmission.
+
 \section{Hardware}
 
 \subsection{Components}
@@ -130,12 +132,16 @@ The hardware design of the robot was focused on using low-cost, off-the-shelf co
 
 \subsection{ROS Hydro}
 
+Robot Operating System (ROS) is a \"meta\" operating system that is installed as package on a UNIX-based OS like Ubuntu or OS X. In a nutshell, ROS allows one to design their robot in a distributed model, where each ROS \"node\" is essentially a process or computational component of the robot. It also provides asynchronous and synchronous communication libraries, network libraries, and supports multiple programming languages. Usage of ROS in the project allowed focus to remain on algorithm development and away from grunt work.
+
 % ROS architecture
 \begin{figure}[h!]
  \caption{Photograph of finished quadcopter robot.}
  \centering
    \includegraphics[width=0.4\textwidth]{images/ros_arch}
 \end{figure}
+
+As shown in figure X, the robot was split into several nodes.
 
 \subsection{RGBDSLAM\_V2}
 \noindent In order to compute a 3D map, the quadcopter's onboard computer uses an algorithm called SLAM (simultaneous localization and mapping) which computes a map and keeps track of the robotic agent's pose and translation relative to said map. Due to time constraints, it was decided that a proprietary SLAM algorithm was not an option and a previously developed software package was chosen instead. Due to it's compatibility with ROS and extensive accpetance throughout the robotics community, RGBDSLAM_V2 was the software used to produce the map and pose transformations of the robot during flight.
