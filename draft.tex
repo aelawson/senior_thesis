@@ -45,16 +45,16 @@
 % Abstract
 \begin{abstract}
 
-This report aims to demonstrate the feasibility of building a global 3-D map from multiple UAV robots in a GPS-denied, indoor environment. Presented are the design of each robot and the reasoning behind choosing its hardware and software components, the process in which a single robot obtains a individual 3-D map entirely onboard, and lastly how the mapping concept is extended to multiple robotic agents to form a global 3-D map using a centralized server. In the latter section, this report focuses on two algorithms, \textsl{Online Mapping} and \textsl{Map Fusion}, developed to facilitate the cooperative approach. A limited selection of experiments and test results are also presented to demonstate application of these algorithms in a real-world setting.
+\noindent This report aims to demonstrate the feasibility of building a global 3-D map from multiple UAV robots in a GPS-denied, indoor environment. Presented are the design of each robot and the reasoning behind choosing its hardware and software components, the process in which a single robot obtains a individual 3-D map entirely onboard, and lastly how the mapping concept is extended to multiple robotic agents to form a global 3-D map using a centralized server. In the latter section, this report focuses on two algorithms, \textsl{Online Mapping} and \textsl{Map Fusion}, developed to facilitate the cooperative approach. A limited selection of experiments and test results are also presented to demonstate application of these algorithms in a real-world setting.
 
 \end{abstract}
 \clearpage
 
-% \renewcommand{\abstractname}{Acknowledgements}
-% \begin{abstract}
-%  I'd like to thank Prof. Shalabh Gupta, Prof. Ashwin Dani, and Prof. Robert McCartney for their advice and support in writing this thesis. I'd also really want to thank Kris Balisciano and Chung Yang for all their hard work on the senior design project getting these robots to work properly.
-% \end{abstract}
-% \clearpage
+\renewcommand{\abstractname}{Acknowledgements}
+\begin{abstract}
+ I'd like to thank Prof. Shalabh Gupta, Prof. Ashwin Dani, and Prof. Robert McCartney for their advice and support in writing this report. I also really want to thank Kris Balisciano and Chung Yang for all their hard work on the senior design project this year.
+\end{abstract}
+\clearpage
 
 % Table of Contents, Figures, and Tables
 \tableofcontents
@@ -72,7 +72,7 @@ In the modern field of robotics, the ability for a robot to move about the envir
 
 \section{Literature Review}
 
-In recent research projects with quadcopters, a wide variety of methods have been used to localize a robot in their environment, including (but not limited to) the use of high-resolution laser scanners \cite{bachrach2011range,shen2011autonomous}, monocular cameras \cite{soundararaj2009autonomous}, and ``RGB-D"\footnote{RGB-D: red-blue-green-depth} cameras as a combination of the two \cite{huang2011visual}. A laser has been used to generate a point cloud and pull out contours that trace the environment\cite{bachrach2011range}, a monocular camera to exploit texture gradients and continuations that can translated into depth estimates \cite{soundararaj2009autonomous}, and Microsoft Kinects (RGB-D cameras) to associate laser depth with image data \cite{huang2011visual}. Lasers capable of such precision and frequency are economically infeasible, and additionally, a pure laser approach is slow, can result in large margins of error, and lacks precision. Using a combination of the two, by means of an RGB-D camera, is responsive,  inexpensive, and produces results of reasonable reliability.
+In recent research projects with quadcopters, a wide variety of methods have been used to localize a robot in their environment, including (but not limited to) the use of high-resolution laser scanners \cite{bachrach2011range,shen2011autonomous}, monocular cameras \cite{soundararaj2009autonomous}, and ``RGB-D"\footnote{RGB-D: red-blue-green-depth} cameras as a combination of the two \cite{huang2011visual}. A laser has been used to generate a point cloud and pull out contours that trace the environment\cite{bachrach2011range}, a monocular camera to exploit texture gradients and continuations that can translated into depth estimates \cite{soundararaj2009autonomous}, and Microsoft Kinects (RGB-D cameras) to associate laser depth with image data \cite{huang2011visual}. Lasers capable of such precision and frequency are economically infeasible, and additionally, a pure laser approach can result in large margins of error. Using a combination of the two, by means of an RGB-D camera, is responsive, inexpensive, and produces results of reasonable reliability.
 
 In recent years, researchers have attempted cooperative mapping methods similar to what's discussed in this report. Walter et al. showed experiments using cooperative SLAM in underwater vehicles \cite{walter2004experimental}. Riazuelo et al. developed the $C^{2}TAM$ cloud framework for cooperative tracking and mapping using UAVs \cite{riazuelo2014c}, where mapping and optimization is computed in the cloud. A few researchers have even demonstrated decentralized SLAM methods, but either do not provide total three-dimensional capability or use external positioning sensors. For instance, Leung et al. used a VICON camera system \cite{leung2012decentralized} to provide true location data to decentralized robotic agents. Cunningham et al. implemented truly autonomous decentralized SLAM, but only focused on 2-D, planar data analysis \cite{cunningham2012large}.
 
@@ -95,7 +95,7 @@ The two major choices of sensors for robotic vision are using a laser scanner or
 \section{Hardware}
 
 \subsection{Components}
-The hardware design of the robot was focused on using low-cost, off-the-shelf components (see Table \ref{tbl: components.}). The approximate cost of a built robot was \$894, significantly cheaper than pre-built alternatives such as the AscTec Pelican used at MIT \cite{bachrach2011range} and University of Washington \cite{bachrach2012estimation} with similar project requirements.
+The hardware design of the robot was focused on using low-cost, off-the-shelf components (see Table \ref{tbl: components.}). The approximate cost of a built robot was \$1045, significantly cheaper than pre-built alternatives such as the AscTec Pelican used at MIT \cite{bachrach2011range} and University of Washington \cite{bachrach2012estimation} with similar project requirements.
 
 % Table of components used on robot
 \begin{table}[h!]
@@ -108,20 +108,21 @@ The hardware design of the robot was focused on using low-cost, off-the-shelf co
     Component & \multicolumn{1}{l}{Description} & \multicolumn{1}{l}{Cost} \\ [1ex]
     \hline
     & \\
-    DJI F450 Frame & Chassis & \$200 \\
-    DJI 1045 Propellers & Props & \$10 \\
-    DJI 2212 Motors & Actuators & \$30 \\
-    12V and 5V Regulators & Power Reg. & \$40 \\
-    Zippy 2450 mAh LiPo & Battery & \$30 \\
-    64GB ODROID XU3 & ARM SBU & \$240 \\
-    Pixhawk PX4 & Controller & \$220 \\
+    DJI F450 Frame & Chassis & \$190 \\
+    DJI 1045 Propellers & Props & \$6 \\
+    DJI 2212 Motors & Actuators & \$92 \\
+    DJI 30A ESCs & Speed Controllers & \$80 \\
+    12V and 5V Regulators & Power Reg. & \$35 \\
+    Zippy 2450 mAh LiPo & Battery & \$22 \\
+    64GB ODROID XU3 & ARM SBU & \$266 \\
+    Pixhawk PX4 & Controller & \$227 \\
     Microsoft Kinect & Visual Sensor & \$99 \\
-    MaxSonar EZ0	& Sonar Sensor & \$25 \\
+    MaxSonar EZ0 & Sonar Sensor & \$28 \\
   \end{tabular}
   \label{tbl: components.}
 \end{table}
 
-The robot used a stock F450 frame from DJI, which was not modified in any way - all components were mounted on existing areas using screws or adhesive. The onboard computational unit chosen was the ODROID XU3 by HardKernel, which has a 1.7Ghz quad-core Snapdragon CPU, 2GB DDR3 RAM, 64GB eMMC flash storage, USB 3.0, and draws 5A. Initially, the robot was equipped with a PandaBoard ES, possessing a 1.2Ghz dual-core CPU with 1GB DDR3 RAM, SD card storage, and drawing 3A. Due to low memory and high read/write latencies, the latter board struggled to bear the load of even a full Ubuntu installation and was replaced with the XU3. For the visual sensor, a stripped down Microsoft Kinect Model 1473 was mounted onto the quadcopter - removing the sensor housing reduced weight from a heavy 3 lb to a very nimble 125 g. A Pixhawk PX4 flight controller was also added to the system for actuation control - this allowed the focus of the project to remain on the mapping the component of the robot. Lastly, a MaxSonar sonar sensor was used as an altitude sensor in conjunction with the Pixhawk. To accomodate the 12V, 1A requirements of the Kinect as well as the 5V, 5A needs of the ODROID, several power regulators were mounted and installed to the robot's power system. The entire system was powered by a single 2450 mAh LiPo battery.
+The robot used a stock F450 frame from DJI, which was not modified in any way - all components were mounted on existing areas using screws or adhesive. The onboard computational unit chosen was the ODROID XU3 by HardKernel, which has a Samsung Exynos5422 2.0Ghz quad-core CPU, 2GB DDR3 RAM, 64GB eMMC flash storage, USB 3.0, and draws 5A. Initially, the robot was equipped with a PandaBoard ES, possessing a 1.2Ghz dual-core CPU with 1GB DDR3 RAM, SD card storage, and drawing 3A. Due to low memory and high read/write latencies, the latter board struggled to bear the load of even a full Ubuntu installation and was replaced with the XU3. For the visual sensor, a stripped down Microsoft Kinect Model 1473 was mounted onto the quadcopter - removing the sensor housing reduced weight from a heavy four pounds to a very nimble 110g. A Pixhawk PX4 flight controller was also added to the system for actuation control - this allowed the focus of the project to remain on the mapping the component of the robot. Lastly, a MaxSonar sonar sensor was used as an altitude sensor in conjunction with the Pixhawk.
 
 \begin{figure}[h!]
  \caption{Photograph of finished quadcopter robot.}
@@ -135,7 +136,7 @@ As seen in Table \ref{fig: weight.}, the total weight of the quadcopter robot wa
 
 \subsection{Power Requirements}
 
-In order to select a battery, the power consumption of all the components mounted on the robot was calculated. As seen in Figure \ref{fig: power.}, the order of components from greatest to least consumption were the DJI 2212 motors, ODROID XU3, Pixhawk, and Kinect sensor. The acutators (and speed controllers) average about 15A during normal operation and the ODROID consumes approximately 4A at full load - since this is engaged in heavy image processing during flight, the ODROID is assumed to be at max. load at all times. The Kinect and Pixhawk also require 700mA and 950mA respectively. In total, the robot consumes about 65.65A during testing operation. A Zippy 2450mAh 4S LiPo battery was selected in tandem with a couple power regulators, seen in Table \ref{tbl: components.}, to distribute power appropriately. \\
+In order to select a battery, the power consumption of all the components mounted on the robot was calculated. As seen in Figure \ref{fig: power.}, the order of components from greatest to least consumption were the DJI 2212 motors, ODROID XU3, Pixhawk, and Kinect sensor. The acutators (and speed controllers) average about 15A during normal operation and the ODROID consumes approximately 4A at full load - since this is engaged in heavy image processing during flight, the ODROID is assumed to be at max. load at all times. The Kinect and Pixhawk also require 700mA and 950mA respectively. In total, the robot consumes about 65.65A during testing operation. In the end, a Zippy 2450mAh 4S LiPo battery was selected to power the robot. To accomodate the 12V, 700mAh requirements of the Kinect as well as the 5V, 5A needs of the ODROID, two power regulators were mounted and installed to the robot's power system, as seen in Table \ref{tbl: components.}.
 
 % Power and weight
 \begin{figure}[h]
@@ -158,10 +159,24 @@ In order to select a battery, the power consumption of all the components mounte
 \section{Software}
 
 \subsection{Overview}
-There were a number of key components needed to develop a software architecture for the robot. ROS Hydro was selected as a software package to manage the communication, networking, and overall data representation used throughout the robot, RGBDSLAM\_V2 as an algorithm integrated with ROS to develop the 3-D map onboard the robot, and lastly, MAVROS was an additional ROS package that was used to communicate with the Pixhawk controller. The data flow between all the software components can be seen in the Appendix in Figure \ref{fig: data flow.}.
+There were a number of key components needed to develop a software architecture for the robot. ROS Hydro was selected as a software package to manage the communication, networking, and overall data representation used throughout the robot, RGBDSLAM\_V2 as an algorithm integrated with ROS to develop the 3-D map onboard the robot, and lastly, MAVROS was an additional ROS package that was used to communicate with the Pixhawk controller. The data flow between all the software components can be seen in Figure \ref{fig: data flow.}. The cyberphysical design of the robot can be seen below in Figure \ref{fig: cyber-physical.}. \\
+
+% Cyber-physical design
+\begin{figure}[h!]
+ \caption{Cyber-physical design of robot}
+ \centering
+   \includegraphics[width=0.8\textwidth]{images/cyber-physical}
+ \label{fig: cyber-physical.}
+\end{figure}
 
 \subsection{RGBDSLAM\_V2}
-\noindent In order to compute a 3-D map, the quadcopter's onboard computer uses a type of algorithm called SLAM (simultaneous localization and mapping), which computes a map and keeps track of the robotic agent's pose relative to said map. Due to time constraints, it was decided that a proprietary SLAM algorithm was not an option and a previously developed software package was chosen instead. Due to its compatibility with ROS and extensive usage throughout the robotics community, RGBDSLAM\_V2 \cite{endres2012evaluation} was the software used to produce the map and pose transformations of the robot during flight.
+\noindent In order to compute a 3-D map, the quadcopter's onboard computer uses a type of algorithm called SLAM (simultaneous localization and mapping), which computes a map and keeps track of the robotic agent's pose relative to said map. Due to time constraints, it was decided that a proprietary SLAM algorithm was not an option and a previously developed software package was chosen instead. Due to its compatibility with ROS and extensive usage throughout the robotics community, RGBDSLAM\_V2 \cite{endres2012evaluation} was the software used to produce the map and pose transformations of the robot during flight. As opposed to sensors like a scanning laser, RGBDSLAM\_V2 provides a SLAM algorithm that can be interfaced with RGB-D sensors like the Microsoft Kinect used throughout this report. The backend of the algorithm consists of a pose graph, as seen in Figure \ref{fig: rgbdslam.}, where each node represents the 3-D pose of the sensor / robot and each edge corresponds to pairwise transformations between sensor poses in the pose graph. This graph is used in tandem with the depth and image data to produce the transformed point clouds in the output map.
+
+\subsection{ROS Hydro}
+Robot Operating System (ROS) is a meta operating system that is installed as package on a UNIX-based OS like Ubuntu or OS X. In a nutshell, ROS allows one to design their robot using a distributed model, where each ROS \textsl{node} is essentially a process or computational component of the robot. It also provides asynchronous and synchronous communication libraries, networking libraries, visualization tools, and supports multiple programming languages. Using said libraries, \textsl{nodes} can obtain information output from other nodes via a subscription or reply-request model as well as output data themselves in the same fashion. Usage of ROS in the project allowed focus to remain on algorithm development and abstracts out the software "glue" that connects all the different algorithms running onboard. Within the system presented in the report, there were several nodes that partitioned the processes running in real-time on the robot. RGBDSLAM produced the map and pose of the robot onboard, which were each broadcast to the server when running cooperative mapping. The Map Fusion node was also running on the server (discussed in a later section) which subscribed to said data and produced the global map for all the robots.
+
+\subsection{MAVROS}
+In order for the onboard computer to communicate with the Pixhawk controller, it makes use of a ROS package called MAVROS. This runs as another ROS node in the ROS system, which allows the computer to send commands to the Pixhawk from a high-level. Such commands include arming and disarming of the motors, take-off and landing commands, checking battery levels, and sending RC values to change the state of the motors (move). MAVROS communicates with the computer using a data protocol called MAVLINK - this protocol allows a graphical user interface, such as the APMPlanner software recommended by the Pixhawk manufacturer, to interface with MAVROS and debug or visualize the internal data that it publishes (IMU data, etc). As explained in the next section, a main function of MAVROS in the project was to command the quadcopter to maintain its altitude during experiemnts, remotely arm or disarm the robot, etc. This can also been noted in Figure \ref{fig: data flow.}. \\
 
 % RGBDSLAM data flow
 \begin{figure}[h!]
@@ -171,22 +186,21 @@ There were a number of key components needed to develop a software architecture 
  \label{fig: rgbdslam.}
 \end{figure}
 
-As opposed to sensors like a scanning laser, RGBDSLAM\_V2 provides a SLAM algorithm that can be interfaced with RGB-D sensors like the Microsoft Kinect used throughout this report. The backend of the algorithm consists of a pose graph, as seen in Figure \ref{fig: rgbdslam.}, where each node represents the 3-D pose of the sensor / robot and each edge corresponds to pairwise transformations between sensor poses in the pose graph. This graph is used in tandem with the depth and image data to produce the transformed point clouds in the output map.
-
-\subsection{ROS Hydro}
-Robot Operating System (ROS) is a meta operating system that is installed as package on a UNIX-based OS like Ubuntu or OS X. In a nutshell, ROS allows one to design their robot using a distributed model, where each ROS \textsl{node} is essentially a process or computational component of the robot. It also provides asynchronous and synchronous communication libraries, networking libraries, visualization tools, and supports multiple programming languages. Using said libraries, \textsl{nodes} can obtain information output from other nodes via a subscription or reply-request model as well as output data themselves in the same fashion. Usage of ROS in the project allowed focus to remain on algorithm development and abstracts out the software "glue" that connects all the different algorithms running onboard. Within the system presented in the report, there were several nodes that partitioned the processes running in real-time on the robot. RGBDSLAM produced the map and pose of the robot onboard, which were each broadcast to the server when running cooperative mapping. The Map Fusion node was also running on the server (discussed in a later section) which subscribed to said data and produced the global map for all the robots. MAVROS was used onboard the robot to take command requests from the onboard computer and send them to the Pixhawk controller.
-
-\subsection{MAVROS}
-
-In order for the onboard computer to communicate with the Pixhawk controller, it makes use of a ROS package called MAVROS. This runs as another ROS node in the ROS system, which allows the computer to send commands to the Pixhawk from a high-level. Such commands include arming and disarming of the motors, take-off and landing commands, checking battery levels, and sending RC values to change the state of the motors (move). MAVROS communicates with the computer using a data protocol called MAVLINK - this protocol allows a graphical user interface, such as the APMPlanner software recommended by the Pixhawk manufacturer, to interface with MAVROS and debug or visualize the internal data that it publishes (IMU data, etc). As explained in the next section, a main function of MAVROS in the project was to command the quadcopter to maintain its altitude during experiemnts, remotely arm or disarm the robot, etc.
+% Component data flow diagram
+\begin{figure}[h!]
+ \caption{Data flow of quadcopter components.}
+ \centering
+   \includegraphics[width=0.8\textwidth]{images/data_flow}
+ \label{fig: data flow.}
+\end{figure} \\
 
 \chapter{Single Robot}
 
 \section{Overview}
 For a single robot, this project focused on complete onboard mapping without relying on communication between an extrenal sensor or computer. To demonstrate this, experiments were conducted that involved saving the map for post-flight retrieval and providing an optional stream of data in real-time to a local computer. As the focus of this project is on the mapping component, fully-developed autonomous navigation is not present. However, some elements to facilitate stable flight are implemented and provide a baseline for future work in navigation.
 
-    \subsection{Stability}
-    The Pixhawk PX4 controller provides a built-in PID controller, which is used for drift stability and basic feedback control of the quadcopter. The proportional, integral, and derivative parameters were tuned through trial and error, adjusting each component until the quadcopter's movement no longer oscillated and remained stable. These parameters can be seen in Table \ref{tbl: pid param.} within the Appendix. The Pixhawk PX4 also provides an altitude holding system, given an appropriate range sensor and input holding altitude. A sonar sensor was attached to the robot and aimed at the floor to provide an approximate distance to the ground - this data was run through a simple filter and then input to the Pixhawk controller. In tandem, these two elements provided both reasonable drift corrections and the ability for the robot to remain at a set altitude in stable conditions. As a result, conducting flights was much easier and such stability also provides a good foundation for navigational components.
+\section{Stability}
+The Pixhawk PX4 controller provides a built-in PID controller, which is used for drift stability and basic feedback control of the quadcopter. The proportional, integral, and derivative parameters were tuned through trial and error, adjusting each component until the quadcopter's movement no longer oscillated and remained stable. The Pixhawk PX4 also provides an altitude holding system, given an appropriate range sensor and input holding altitude. A sonar sensor was attached to the robot and aimed at the floor to provide an approximate distance to the ground - this data was run through a simple filter and then input to the Pixhawk controller. In tandem, these two elements provided both reasonable drift corrections and the ability for the robot to remain at a set altitude in stable conditions. As a result, conducting flights was much easier and such stability also provides a good foundation for navigational components.
 
 \section{Mapping}
 In a previous paper, Bachrach et al. implemented RGB-D mapping, and in a separate publication \cite{bachrach2011range}, laser mapping, by offloading real-time processing to a local server \cite{bachrach2012estimation}.  This robot design differs from its contemporaries by computing all steps of the mapping procedure onboard. As explained previously, the quadcopter's onboard computer runs an RGBDSLAM ROS node in real-time during flight. This node generates the three-dimensional map, which can be be saved on disk as a file through a command in ROS and retrieved after a test flight. The ROS node also allows requests for the current map to be sent over the network to another computer. As a result of difficulties discussed in the result section, a custom package called \textsl{Online Mapping} was written that allows for real-time visualization (this is explained in a later section) - this allows the map be streamed efficiently to a nearby computer via Wi-Fi connection. These two options allow for absolute flexibility in situations where remote access to the robot may or may not be possible.
@@ -194,7 +208,7 @@ In a previous paper, Bachrach et al. implemented RGB-D mapping, and in a separat
 \section{Results}
 Testing of a single quadcopter robot was done in the concourse of the Information Technology Engineering building on the UConn Storrs campus. As mentioned in the overview, there were two primary goals to check feasibility of the onboard mapping process - if the map could be produced, saved, and retrieved after the flight and if the mapping process could be (optionally) streamed to a laptop located nearby in real-time. As seen in Figure \ref{fig: single test.}, an image taken of the quadcopter mid-test can be seen in the top left, the RGB stream from the Kinect sensor on the bottom left, and on the right-hand side, the 3-D map generated in real-time by the onboard computer. In all tests, the quadcopter successfully saved the map as a file and was easily retrieved upon completion of the experiment.
 
-% Map fusion algorithm flowchart
+% Live test of single quadcopter
 \begin{figure}[h]
  \caption{Live test of a single quadcopter.}
  \centering
@@ -254,80 +268,42 @@ Coupled with the mapping component of the RGBDSLAM package, a custom ROS node wa
 
     Lastly, the target and transformed source cloud are concatenated using Point Cloud Library's concatentation features - programmatically, this is as simple as just adding the clouds together. Using another Voxel filter, the excess data points are trimmed away to generate the final stitched version of the map, as shown in Figure \ref{fig:ICP alignment.}. The parameters used to tune the filtering process can be seen in Table \ref{tbl: map fusion param.} within the Appendix. \\
 
-% Map fusion visuals
-\begin{figure}[h]
-    \centering
-    \begin{subfigure}[h]{0.31\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{images/fusion_raw}
-        \caption{Raw concatentation.}
-        \label{fig:Raw concatentation.}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[h]{0.31\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{images/fusion_scia}
-        \caption{SCIA alignment.}
-        \label{fig:SCIA alignment.}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[h]{0.31\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{images/fusion_scia}
-        \caption{ICP alignment.}
-        \label{fig:ICP alignment.}
-    \end{subfigure}
-    \caption{Visual process of map fusion.}
-    \label{fig:Visual process of map fusion.}
-\end{figure}
-
 \section{Results}
 
 Due to financial and logistical difficulties, a test involving two quadcopters flying simultaneously in real-time was unable to be conducted within the time frame for this project. As an alternative to demonstrate effectiveness of the approaches demonstrated in this report, two separate flights using the same quadcopter were conducted in the same overlapping environment and saved into \textsl{rosbags}. These \textsl{rosbags} are a part of the ROS Hydro software system and allow data to be recorded in real-time and then played back using the same timesteps. The \textsl{rosbags} were then simulated as live agents, with map data streaming at the same frequency and conditions as a real multi-robot flight test - this provided data to the map fusion server that almost exactly duplicates two quadcopters flying simultaneously and served as a substitution for a real test. \\
 
-(EXPERIMENT IMAGES / DATA WILL BE INSERTED FOR FINAL DRAFT) \\
+% Map fusion visuals
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[h]{0.41\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/bad_approx}
+        \caption{Bad approximation.}
+        \label{fig: approx a.}
+    \end{subfigure}
+    \begin{subfigure}[h]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/good_approx}
+        \caption{Good approximation.}
+        \label{fig: approx b.}
+    \end{subfigure}
+    \caption{Visual process of map fusion.}
+    \label{fig: success and failure of map fusion.}
+\end{figure}
 
-\noindent The results presented in Figure X were obtained in the L.I.N.K.S Lab to capture the depth and RGB data of the room. Approximately one half of the room was captured by the first robot and the second half of the room was captured by a second robot. These two sets of experimental data were served in the \textsl{rosbags} mentioned above. Within the tests conducted, a global map was successfully computed from the aggregate maps corresponding to the individual quadcopter robots, as shown in Figure X. Although no live test was conducted, the success of the simulation provides a good sense of reliability for the \textsl{Online Mapping} and \textsl{Map Fusion} algorithms - a full live test would simply reinforce the success of these experiments.
+\noindent The results presented in Figure \ref{fig: success and failure of map fusion.} were obtained in the L.I.N.K.S Lab by flying the robot around the perimeter of the room. In one test, approximately one half of the room was captured by the first robot and the second half of the room was captured by a second robot, with little to no overlap. This resulted in a very poor approximation to a global map, as seen in Figure \ref{fig: approx a.}. In the second test, the same half of the room was captured by the two robots - this resulted in a very good transformation and approximation to a global map - this is shown in Figure \ref{fig: approx b.}. These results show that even with the powerful sample consensus and iterative closest point algorithms, a significant amount of overlap or matching features is needed in able to successfully compute a global map corresponding to the individual quadcopter robots. Although no live test with two robots was conducted, the success of the simulation provides a good sense of reliability for the \textsl{Online Mapping} and \textsl{Map Fusion} algorithms - a full live test would simply reinforce the success and failures of these experiments.
 
 \chapter{Conclusions}
 
-\subsection{Overview}
+\section{Overview}
 
 This report aimed to show that onboard mapping in a GPS-denied enivironment using a UAV robot is possible (without any external sensors or communication with another computer) and that multiple robots can successfully contribute to a full 3-D global map that is computed by a nearby centralized server. The experiments shown throughout this report successfully demonstrate these ideas in real indoor locations where external positioning is not available. Robots can successfully explore an environment, for instance, within a communication blackout zone by saving a map to their filesystem that is retrieved post-flight. When a wireless network is conveniently available, they can also show a user what is being explored by streaming their map in real-time to another computer. In the case of multiple robots, results revealed that map building is not limited to a single robot, and with a server or computer nearby, multiple robots can divy up an environment by fusing their explored locations together. Although these concepts are largely limited to indoor enviroments and where there is enough overlap to distinguish segments of an environment, these tests provide a framework for expansion into a more robust cooperative system or one with a full navigation component.
 
-\subsection{Future Work}
+\section{Future Work}
 
-As stated earlier, this project did not focus on navigation or control of multiple quadcopters, but rather concentrated on the feasibility of mapping using multiple quadcopters. A natural progression forward would be to implement localization and possibly object avoidance algorithms in parallel with the mapping procedures. The RGBDSLAM algorithm in this report was used mostly for its mapping and pose graph features, but was selected partly because of its capabilities in estimating trajectory and facilitating full autonomous navigation. Implementation of navigation in tandem with the concepts presented in this report would be a significant achievement. In regard to the cooperative mapping component, it's clear that there are limitations to the approach taken in this report. If two maps provided by robotic agents do not overlap, a global map would not be produced. A potential solution to this problem is to take a similar approach to , by storing each map in a database and attempting to fuse them together at intervals. On a higher level, a centralized approach to cooperative mapping would ideally not be necessary at all. Instead, the onboard computational units would cooperatively compute the global map onboard, independent of external communication. Unfortunately, it is clear that the application of a decentralized approach is limited largely by technological capabilities. A possible direction to overcome to this hurdle could be to add a secondary computational unit aboard each robotic agent - this would allow for sufficient computational overhead to compute the global map in a decentralized manner, but would increase the power and weight requirements of the robot significantly, resulting in need of a larger capacity battery to compensate for increased thrust and power needs.
+As stated earlier, this project did not focus on navigation or control of multiple quadcopters, but rather concentrated on the feasibility of mapping using multiple quadcopters. A natural progression forward would be to implement localization and possibly object avoidance algorithms in parallel with the mapping procedures. The RGBDSLAM algorithm in this report was used mostly for its mapping and pose graph features, but was selected partly because of its capabilities in estimating trajectory and facilitating full autonomous navigation. Implementation of navigation in tandem with the concepts presented in this report would be a significant achievement. In regard to the cooperative mapping component, it's clear that there are limitations to the approach taken in this report. If two maps provided by robotic agents do not overlap, a global map would not be produced. A potential solution to this problem is to store each map in a database and attempt to randomly fuse them together at intervals, similar to the approach taken by Riazuelo et al \cite{riazuelo2014c}. On a higher level, a centralized approach to cooperative mapping would ideally not be necessary at all. Instead, the onboard computational units would cooperatively compute the global map onboard, independent of external communication. Unfortunately, it is clear that the application of such a decentralized approach is limited largely by technological capabilities. A possible direction to overcome to this hurdle could be to add a secondary computational unit aboard each robotic agent - this would allow for sufficient computational overhead to compute the global map in a decentralized manner, but would increase the power and weight requirements of the robot significantly, resulting in need of a larger capacity battery to compensate for increased thrust and power needs.
 
 \chapter{Appendix}
-
-% Component data flow diagram
-\begin{figure}[h!]
- \caption{Data flow of quadcopter components.}
- \centering
-   \includegraphics[width=0.8\textwidth]{images/data_flow}
- \label{fig: data flow.}
-\end{figure} \\
-
-(VALUES BELOW ARE PLACEHOLDER VALUES.) \\
-
-% Table of PID parameters
-\begin{table}[h!]
-  \centering
-  \caption{PID Parameters}
-  \vspace{2mm}
-  \begin{tabular}{l l}
-    \hline \hline
-    \vspace{-2mm}
-    Parameter & \multicolumn{1}{l}{Value} \\ [1ex]
-    \hline
-    & \\
-    Proportional & 0.05 \\
-    Integral & 0.1 \\
-    Derivative & 50 \\
-  \end{tabular}
-  \label{tbl: pid param.}
-\end{table}
 
 % Table of Map Fusion parameters
 \begin{table}[h!]
@@ -345,9 +321,11 @@ As stated earlier, this project did not focus on navigation or control of multip
     ICP Max. Iter. & 50 \\
     ICP Trans. Epsilon & 1e-8 \\
     ICP Euclid. Epsilon & 1 \\
-    SCIA Min. Sample. Dist & 1 \\
-    SCIA Max. Corresp. Dist & 1 \\
+    SCIA Min. Sample. Dist & 0.01 \\
+    SCIA Max. Corresp. Dist & 0.1 \\
     SCIA Max. Iter. & 50 \\
+    Radius Normals & 0.05 \\
+    Radius Features & 0.10 \\
   \end{tabular}
   \label{tbl: map fusion param.}
 \end{table}
